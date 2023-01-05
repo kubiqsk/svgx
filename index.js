@@ -19,7 +19,7 @@ const optimizeSVGs = async ( startPath ) => {
 	for( var i = 0; i < files.length; i++ ){
 		var filename = path.join( startPath, files[i] );
 		var stat = fs.lstatSync( filename );
-		if( stat.isDirectory() ){
+		if( stat.isDirectory() && process.argv.includes('-r') ){
 			optimizeSVGs( filename );
 		}else if( filename.endsWith('.svg') ){
 			const oldSize = filesize( stat.size );
