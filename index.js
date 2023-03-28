@@ -15,14 +15,16 @@ const optimizeSVGs = async ( startPath ) => {
 		return;
 	}
 
+	var widthHeightAdded = '';
+
 	var files = fs.readdirSync( startPath );
 	for( var i = 0; i < files.length; i++ ){
+		widthHeightAdded = '';
 		var filename = path.join( startPath, files[i] );
 		var stat = fs.lstatSync( filename );
 		if( stat.isDirectory() && process.argv.includes('-r') ){
 			optimizeSVGs( filename );
 		}else if( filename.endsWith('.svg') ){
-			const oldSize = filesize( stat.size );
 			console.log( 'Optimizing ', files[i] );
 			const result = optimize(
 				fs.readFileSync( filename, 'utf8' ),
@@ -92,9 +94,11 @@ const optimizeSVGs = async ( startPath ) => {
 												if( nums[0] === '0' && nums[1] === '0' ){
 													if( node.attributes.width == null ){
 														node.attributes.width = nums[2];
+														widthHeightAdded += 'width="' + nums[2] + '"';
 													}
 													if( node.attributes.height == null ){
 														node.attributes.height = nums[3];
+														widthHeightAdded += ' height="' + nums[3] + '"';
 													}
 												}
 											}
@@ -112,12 +116,18 @@ const optimizeSVGs = async ( startPath ) => {
 				}
 			);
 
-			await trash([ filename ]);
-
-			fs.writeFileSync( filename, result.data );
-			stat = fs.lstatSync( filename );
-			console.log( oldSize, ' -> ', filesize( stat.size ) );
-			console.log( '----' );
+			const newSize = result.data.length;
+			if( newSize <= stat.size || ( widthHeightAdded.length && newSize - stat.size <= widthHeightAdded.length + 2 ) ){ // maybe width and height was added, so it can have a few more bytes
+				const oldSize = filesize( stat.size );
+				await trash([ filename ]);
+				fs.writeFileSync( filename, result.data );
+				stat = fs.lstatSync( filename );
+				console.log( oldSize, ' -> ', filesize( stat.size ) );
+				console.log( '----' );
+			}else{
+				console.log( 'New file size is larger or equal to old file size. Skipping.' );
+				console.log( '----' );
+			}
 		}
 	}
 }
