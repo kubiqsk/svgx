@@ -111,7 +111,41 @@ const optimizeSVGs = async ( startPath ) => {
 						'convertStyleToAttrs',
 						'removeRasterImages',
 						'removeScriptElement',
-						'reusePaths'
+						'reusePaths',
+						{
+							name: 'maybeRemoveSvgFill',
+							description: 'remove fill attribute from svg tag if all child tags have a fill',
+							fn: () => {
+								const checkFillAttribute = ( node, processOnlyChildNodes ) => {
+									if( ! processOnlyChildNodes ){
+										if( ! node.attributes || ! node.attributes.fill ){
+											return false;
+										}
+									}
+									if( node.children ){
+										for( let child of node.children ){
+											if( ! checkFillAttribute( child, false ) ){
+												return false;
+											}
+										}
+									}
+									return true;
+								};
+
+								return {
+									element: {
+										enter: ( node, parentNode ) => {
+											if( node.name == 'svg' && parentNode.type == 'root' && node.attributes.fill == 'none' ){
+												let allDescendantsHaveFill = checkFillAttribute( node, true );
+												if( allDescendantsHaveFill ){
+													node.attributes.fill = '';
+												}
+											}
+										}
+									}
+								}
+							}
+						}
 					]
 				}
 			);
