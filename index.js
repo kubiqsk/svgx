@@ -116,16 +116,20 @@ const optimizeSVGs = async ( startPath ) => {
 							name: 'maybeRemoveSvgFill',
 							description: 'remove fill attribute from svg tag if all child tags have a fill',
 							fn: () => {
-								const checkFillAttribute = ( node, processOnlyChildNodes ) => {
-									if( ! processOnlyChildNodes ){
+								const hasFillAttribute = ( node, isRootNode ) => {
+									if( ! isRootNode ){
 										if( ! node.attributes || ! node.attributes.fill ){
 											return false;
 										}
 									}
 									if( node.children ){
-										for( let child of node.children ){
-											if( ! checkFillAttribute( child, false ) ){
-												return false;
+										if( ! isRootNode && node.attributes.fill ){
+											return true;
+										}else{
+											for( let child of node.children ){
+												if( ! hasFillAttribute( child, false ) ){
+													return false;
+												}
 											}
 										}
 									}
@@ -136,7 +140,7 @@ const optimizeSVGs = async ( startPath ) => {
 									element: {
 										enter: ( node, parentNode ) => {
 											if( node.name == 'svg' && parentNode.type == 'root' && node.attributes.fill == 'none' ){
-												let allDescendantsHaveFill = checkFillAttribute( node, true );
+												let allDescendantsHaveFill = hasFillAttribute( node, true );
 												if( allDescendantsHaveFill ){
 													node.attributes.fill = '';
 												}
