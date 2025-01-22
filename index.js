@@ -9,6 +9,17 @@ const require = createRequire(import.meta.url);
 const fs = require('fs');
 const path = require('path');
 
+const getUniqueFilename = filePath => {
+	let uniquePath = filePath;
+	let counter = 1;
+	while( fs.existsSync( uniquePath ) ){
+		const { dir, name, ext } = path.parse( filePath );
+		uniquePath = path.join( dir, `${name}_${counter}${ext}` );
+		counter++;
+	}
+	return uniquePath;
+}
+
 const optimizeSVGs = async ( startPath ) => {
 	if( ! fs.existsSync( startPath ) ){
 		console.log( 'no dir ', startPath );
@@ -18,9 +29,12 @@ const optimizeSVGs = async ( startPath ) => {
 	var widthHeightAdded = '';
 
 	var files = fs.readdirSync( startPath );
-	for( var i = 0; i < files.length; i++ ){
+	let i;
+	for( i = 0; i < files.length; i++ ){
+		if( files[i].substr( 0, 5 ) == 'svgx_' ) continue;
 		widthHeightAdded = '';
 		var filename = path.join( startPath, files[i] );
+		var final_filename = getUniqueFilename( path.join( startPath, 'svgx_' + files[i] ) );
 		var stat = fs.lstatSync( filename );
 		if( stat.isDirectory() && process.argv.includes('-r') ){
 			optimizeSVGs( filename );
@@ -158,11 +172,12 @@ const optimizeSVGs = async ( startPath ) => {
 			if( newSize <= stat.size || ( widthHeightAdded.length && newSize - stat.size <= widthHeightAdded.length + 2 ) ){ // maybe width and height was added, so it can have a few more bytes
 				const oldSize = filesize( stat.size );
 				await trash([ filename ]);
-				fs.writeFileSync( filename, result.data );
-				stat = fs.lstatSync( filename );
+				fs.writeFileSync( final_filename, result.data );
+				stat = fs.lstatSync( final_filename );
 				console.log( oldSize, ' -> ', filesize( stat.size ) );
 				console.log( '----' );
 			}else{
+				fs.renameSync( filename, final_filename );
 				console.log( 'New file size is larger or equal to old file size. Skipping.' );
 				console.log( '----' );
 			}
