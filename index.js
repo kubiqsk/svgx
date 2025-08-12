@@ -31,10 +31,10 @@ const optimizeSVGs = async ( startPath ) => {
 	var files = fs.readdirSync( startPath );
 	let i;
 	for( i = 0; i < files.length; i++ ){
-		if( files[i].substr( 0, 5 ) == 'svgx_' ) continue;
+		if( files[i].substr( 0, 5 ) == 'svgx-' ) continue;
 		widthHeightAdded = '';
 		var filename = path.join( startPath, files[i] );
-		var final_filename = getUniqueFilename( path.join( startPath, 'svgx_' + files[i] ) );
+		var final_filename = getUniqueFilename( path.join( startPath, 'svgx-' + files[i] ) );
 		var stat = fs.lstatSync( filename );
 		if( stat.isDirectory() && process.argv.includes('-r') ){
 			optimizeSVGs( filename );
