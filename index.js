@@ -185,4 +185,10 @@ const optimizeSVGs = async ( startPath ) => {
 	}
 }
 
-optimizeSVGs( process.cwd() );
+// Determine the folder to process: use the first command-line argument that
+// isn't a flag (e.g. "-r") if one was given, otherwise fall back to the
+// current working directory.
+const cliPath = process.argv.slice(2).find( arg => ! arg.startsWith('-') );
+const targetPath = cliPath ? path.resolve( cliPath ) : process.cwd();
+
+optimizeSVGs( targetPath );
